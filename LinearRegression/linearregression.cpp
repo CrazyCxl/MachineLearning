@@ -36,52 +36,83 @@ bool LinearRegression::train(const string &file_str)
     return true;
 }
 
-bool LinearRegression::train(const vector<double> X, const vector<double> Y)
+bool LinearRegression::train(const vector<double> &X, const vector<double> &Y)
 {
-    if(X.size() != Y.size())
-        return false;
+    vector<vector<double> > x_s;
+    for(auto x = X.begin();x != X.end();x++){
+        x_s.push_back({*x});
+    }
+    return train(x_s,Y);
+}
 
-    gradientDescent(X,Y);
-    cout<<"over gradient descent theta1:"<<theta1<<" theta2:"<<theta2<<endl;
+bool LinearRegression::train(const vector<vector<double> > &x_s, const vector<double> &Y)
+{
+    thetas.clear();
+
+    if(x_s.size() != Y.size() || x_s.size() == 0){
+        return false;
+    }
+
+    thetas = vector<double>(x_s[0].size()+1);
+
+    gradientDescent(x_s,Y);
+    cout<<"over gradient descent theta";
+    for(size_t i = 0 ;i<thetas.size(); i++){
+        cout<<" "<<thetas[i];
+    }
+    cout<<endl;
     return true;
 }
 
-vector<double> LinearRegression::predict(vector<double> X_t)
+vector<double> LinearRegression::predict(const vector<vector<double>> &X_t)
 {
     vector<double> Y_t;
-    for(auto x = X_t.begin();x != X_t.end();x++){
-        Y_t.push_back(theta1 + theta2*(*x));
+    for(auto xs = X_t.begin();xs != X_t.end();xs++){
+        Y_t.push_back(func(*xs));
     }
     return Y_t;
 }
 
-void LinearRegression::gradientDescent(const vector<double> &X,const vector<double> &Y)
+void LinearRegression::gradientDescent(const vector<vector<double> > &x_s,const vector<double> &Y)
 {
-    double d_theta1 = 0,d_theta2 = 0;
+    vector<double> d_thetas(thetas.size());
 
-    for(size_t i=0;i<X.size();++i){
-        d_theta1 += theta1 + theta2*X[i] - Y[i];
-        d_theta2 += (theta1 + theta2*X[i] - Y[i])*X[i];
+    for(size_t i=0;i<x_s.size();++i){
+        d_thetas[0] += (func(x_s[i]) - Y[i]);
+        for(size_t j=0;j<x_s[i].size();++j){
+            d_thetas[j+1] += (func(x_s[i]) - Y[i])*x_s[i][j];
+        }
     }
-
-    d_theta1 = d_theta1/X.size();
-    d_theta2 = d_theta2/X.size();
 
     bool is_continue = false;
 
-    if(fabs(d_theta1) > minDTheta){
-        theta1 = theta1 - step*d_theta1;
-        is_continue = true;
+    for(size_t i=0;i<d_thetas.size();++i){
+        d_thetas[i] = d_thetas[i]/x_s.size();
+        if(fabs(d_thetas[i]) > minDTheta){
+            thetas[i] = thetas[i] - step*d_thetas[i];
+            is_continue = true;
+        }
     }
-
-    if(fabs(d_theta2) > minDTheta){
-        theta2 = theta2 - step*d_theta2;
-        is_continue = true;
-    }
-
     if(is_continue){
-        cout<<"countinue gradient descent theta1:"<<theta1<<" theta2:"<<theta2
-           <<" d_theta1:"<<d_theta1<<" d_theta2:"<<d_theta2<<endl;
-        gradientDescent(X,Y);
+        cout<<"continue gradient descent theta";
+        for(size_t i = 0 ;i<thetas.size(); i++){
+            cout<<" "<<thetas[i];
+        }
+        cout<<endl;
+        gradientDescent(x_s,Y);
     }
+}
+
+double LinearRegression::func(const vector<double> &X)
+{
+    if(X.size() != thetas.size() -1){
+        cout<<"LinearRegression::func error size!";
+        return 0;
+    }
+
+    double y = thetas[0];
+    for(size_t i = 0;i<X.size();++i){
+        y +=  thetas[i+1]*X[i];
+    }
+    return y;
 }
