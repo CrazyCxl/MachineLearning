@@ -1,6 +1,7 @@
 #include "linearregression.h"
 #include <fstream>
 #include <string>
+#include <sstream>
 
 LinearRegression::LinearRegression()
 {
@@ -11,24 +12,30 @@ bool LinearRegression::train(const string &file_str)
 {
     ifstream file(file_str);
     if(file.is_open()){
-        vector<double> X,Y;
+        vector<vector<double>> Xs;
+        vector<double> Y;
         while (!file.eof()){
             string line_str;
-            char buff[50] = {0};
-            file.getline(buff,50);
+            char buff[1024] = {0};
+            file.getline(buff,1024);
             line_str = string(buff);
 
             if(buff[0] < 48 || buff[0]>57) // is not number
                 continue;
 
-            size_t index = line_str.find_first_of(',');
-            string line_x = line_str.substr(0,index);
-            string line_y = line_str.substr(index+1,line_str.size() - index);
-            cout << "load x:"<<line_x.c_str()<<" y:"<<line_y.c_str()<<endl;
-            X.push_back(stod(line_x));
-            Y.push_back(stod(line_y));
+//            cout << "load x:"<<line_x.c_str()<<" y:"<<line_y.c_str()<<endl;
+            vector<double> X;
+            std::istringstream split(line_str);
+            std::string each;
+            while (std::getline(split, each, ',')){
+                X.push_back(stod(each));
+            }
+
+            Y.push_back(*(X.end()-1));
+            X.erase(X.end()-1);
+            Xs.push_back(X);
         }
-        train(X,Y);
+        train(Xs,Y);
     }else{
         return false;
     }
@@ -55,7 +62,7 @@ bool LinearRegression::train(const vector<vector<double> > &x_s, const vector<do
 
     thetas = vector<double>(x_s[0].size()+1);
 
-    gradientDescent(x_s,Y);
+    while(gradientDescent(x_s,Y));
     cout<<"over gradient descent theta";
     for(size_t i = 0 ;i<thetas.size(); i++){
         cout<<" "<<thetas[i];
@@ -73,7 +80,7 @@ vector<double> LinearRegression::predict(const vector<vector<double>> &X_t)
     return Y_t;
 }
 
-void LinearRegression::gradientDescent(const vector<vector<double> > &x_s,const vector<double> &Y)
+bool LinearRegression::gradientDescent(const vector<vector<double> > &x_s,const vector<double> &Y)
 {
     vector<double> d_thetas(thetas.size());
 
@@ -94,13 +101,13 @@ void LinearRegression::gradientDescent(const vector<vector<double> > &x_s,const 
         }
     }
     if(is_continue){
-        cout<<"continue gradient descent theta";
+        cout<<"continue gradient descent ";
         for(size_t i = 0 ;i<thetas.size(); i++){
-            cout<<" "<<thetas[i];
+            cout<<" θ:"<<thetas[i]<<" dθ:"<<d_thetas[i];
         }
         cout<<endl;
-        gradientDescent(x_s,Y);
     }
+    return is_continue;
 }
 
 double LinearRegression::func(const vector<double> &X)
