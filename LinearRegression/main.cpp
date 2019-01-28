@@ -13,10 +13,10 @@ int main(int,char *[])
 //        cout<<endl;
 //    }
 
-    linearRegression.setStep(1e-11);
+//    linearRegression.setMinDTheta(1e-3);
     if(linearRegression.train("../../../resource/dataset/50_Startups.csv")){
-        vector<double> Y = linearRegression.predict({{0,0,15505.73,117382.3,35534.17,69758.98},
-                                                     {1,0,5420.05,51743.15,0,35673.41}});
+        vector<double> Y = linearRegression.predict({{0,0,15505.73,117382.3,35534.17},
+                                                     {1,0,5420.05,51743.15,0}});
         cout << "result:";
         for (auto y = Y.begin();y!=Y.end();y++) {
             cout <<" "<<*y;

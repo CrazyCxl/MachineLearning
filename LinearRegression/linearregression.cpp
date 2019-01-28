@@ -55,14 +55,28 @@ bool LinearRegression::train(const vector<double> &X, const vector<double> &Y)
 bool LinearRegression::train(const vector<vector<double> > &x_s, const vector<double> &Y)
 {
     thetas.clear();
+    steps.clear();
 
     if(x_s.size() != Y.size() || x_s.size() == 0){
         return false;
     }
 
     thetas = vector<double>(x_s[0].size()+1);
+//    thetas.push_back(164830);
+//    thetas.push_back(7946.46);
+//    thetas.push_back(5634.28);
+//    thetas.push_back(182960);
+//    thetas.push_back(-124963);
+//    thetas.push_back(-37417);
 
-    while(gradientDescent(x_s,Y));
+    steps = vector<double>(x_s[0].size()+1,baseStep);
+
+    vector<vector<double>> X = x_s;
+    if(x_s[0].size() > 1){
+        X = featureScaling(x_s);
+    }
+
+    while(gradientDescent(X,Y));
     cout<<"over gradient descent theta";
     for(size_t i = 0 ;i<thetas.size(); i++){
         cout<<" "<<thetas[i];
@@ -80,34 +94,129 @@ vector<double> LinearRegression::predict(const vector<vector<double>> &X_t)
     return Y_t;
 }
 
+
+vector<vector<double> > LinearRegression::featureScaling(const vector<vector<double> > &x_s)
+{
+    vector<vector<double> > X;
+    for(size_t i =0;i <x_s.size();i++){
+        double x_max = x_s[i][0],x_min = x_s[i][0],x_avg = 0;
+        for(size_t j =0 ;j < x_s[i].size();j++){
+            if(x_max < x_s[i][j]) x_max = x_s[i][j];
+            if(x_min > x_s[i][j]) x_min = x_s[i][j];
+            x_avg += x_s[i][j];
+        }
+
+        x_avg = x_avg / x_s[i].size();
+
+        vector<double> xs_t;
+
+        for(size_t j =0 ;j < x_s[i].size();j++){
+            if(x_s[i][j] < -1 || x_s[i][j] > 1){
+                xs_t.push_back((x_s[i][j] - x_avg)/(x_max -x_min));
+            }else{
+                xs_t.push_back(x_s[i][j]);
+            }
+        }
+        X.push_back(xs_t);
+    }
+    return X;
+}
+
 bool LinearRegression::gradientDescent(const vector<vector<double> > &x_s,const vector<double> &Y)
 {
-    vector<double> d_thetas(thetas.size());
+    vector<double> d_thetas_t(thetas.size());
 
     for(size_t i=0;i<x_s.size();++i){
-        d_thetas[0] += (func(x_s[i]) - Y[i]);
+        d_thetas_t[0] += (func(x_s[i]) - Y[i]);
         for(size_t j=0;j<x_s[i].size();++j){
-            d_thetas[j+1] += (func(x_s[i]) - Y[i])*x_s[i][j];
+            d_thetas_t[j+1] += (func(x_s[i]) - Y[i])*x_s[i][j];
         }
     }
 
     bool is_continue = false;
 
-    for(size_t i=0;i<d_thetas.size();++i){
-        d_thetas[i] = d_thetas[i]/x_s.size();
-        if(fabs(d_thetas[i]) > minDTheta){
-            thetas[i] = thetas[i] - step*d_thetas[i];
+    for(size_t i=0;i<d_thetas_t.size();++i){
+        d_thetas_t[i] = d_thetas_t[i]/x_s.size();
+
+        if(d_thetas.size() > 0 && fabs(d_thetas[i]) > minDTheta){
+            double diff = fabs(d_thetas[i]) - fabs(d_thetas_t[i]);
+            if(diff < 0 ){
+                if(d_thetas[i] * d_thetas_t[i] > 0){
+                    changeValue(steps[i],true);
+                }else{
+                    changeValue(steps[i],false);
+                }
+            }else{
+                if(stepIsTooLarge(d_thetas[i],d_thetas_t[i])){
+                    changeValue(steps[i],false);
+                }
+                else if(stepIsTooSmall(d_thetas[i],d_thetas_t[i])){
+                    changeValue(steps[i],true);
+                }
+            }
+        }
+
+        double diff = steps[i]*d_thetas_t[i];
+        thetas[i] = thetas[i] - diff;
+        if(fabs(d_thetas_t[i]) > minDTheta){
             is_continue = true;
         }
     }
     if(is_continue){
         cout<<"continue gradient descent ";
         for(size_t i = 0 ;i<thetas.size(); i++){
-            cout<<" θ:"<<thetas[i]<<" dθ:"<<d_thetas[i];
+            cout<<" θ:"<<thetas[i]<<" dθ:"<<d_thetas_t[i];
+//                  << " s:"<<steps[i];
         }
         cout<<endl;
     }
+
+    d_thetas = d_thetas_t;
     return is_continue;
+}
+
+bool LinearRegression::stepIsTooLarge(double a, double b)
+{
+    a = fabs(a);
+    b = fabs(b);
+
+    a = getNum(a,100) +getNum(a)*10;
+    b = getNum(b,100) +getNum(b)*10;
+    return (a-b)>1;
+}
+
+void LinearRegression::changeValue(double &x, bool up)
+{
+    if(up){
+        x += x/200 + x*minDTheta;
+    }else{
+        x -= x/200 + x*minDTheta;
+    }
+}
+
+bool LinearRegression::stepIsTooSmall(double a, double b)
+{
+    a = fabs(a);
+    b = fabs(b);
+
+    a = getNum(a,1000) + getNum(a,100)*10 +getNum(a)*100;
+    b = getNum(b,1000) + getNum(b,100)*10 +getNum(b)*100;
+    return (a - b) < 1;
+}
+
+int LinearRegression::getNum(double num, int filt)
+{
+    int f = 0;
+    while (num < filt/10){
+        num *= 10;
+    }
+
+    while (num > filt){
+        num /= 10;
+    }
+
+    f = static_cast<int>(num)%10;
+    return f;
 }
 
 double LinearRegression::func(const vector<double> &X)

@@ -13,17 +13,24 @@ public:
     bool train(const string &file_str);
     bool train(const vector<double> &X,const vector<double> &Y);
     bool train(const vector<vector<double>> &x_s,const vector<double> &Y);
-    void setStep(const double &step){this->step = step;}
 
     vector<double> predict(const vector<vector<double> > &X_t);
+    void setMinDTheta(double value){minDTheta = value;}
 private:
+    vector<vector<double>> featureScaling(const vector<vector<double> > &x_s);
     bool gradientDescent(const vector<vector<double>> &x_s,const vector<double> &Y);
+    bool stepIsTooLarge(double a,double b);
+    void changeValue(double &x,bool up);
+    bool stepIsTooSmall(double a,double b);
+    int getNum(double num,int filt = 10);
     double func(const vector<double> &X);
 
-    double step = 0.01;
     double minDTheta = 1e-5;//1*(10的-5次方)即0.00001
 
     vector<double> thetas;
+    vector<double> d_thetas;
+    vector<double> steps;
+    double baseStep = 0.01;
 };
 
 #endif // LINEARREGRESSION_H
