@@ -16,8 +16,8 @@ public:
 
     vector<double> predict(const vector<vector<double> > &X_t);
     void setMinDTheta(double value){minDTheta = value;}
+    void setBaseStep(double value){baseStep = value;}
 private:
-    vector<vector<double>> featureScaling(const vector<vector<double> > &x_s);
     bool gradientDescent(const vector<vector<double>> &x_s,const vector<double> &Y);
     bool stepIsTooLarge(double a,double b);
     void changeValue(double &x,bool up);
@@ -30,6 +30,10 @@ private:
     vector<double> thetas;
     vector<double> d_thetas;
     vector<double> steps;
+
+    vector<double> x_avgs;
+    vector<double> x_mins;
+    vector<double> x_maxs;
     double baseStep = 0.01;
 };
 

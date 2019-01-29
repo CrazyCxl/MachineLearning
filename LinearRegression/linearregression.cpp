@@ -62,19 +62,13 @@ bool LinearRegression::train(const vector<vector<double> > &x_s, const vector<do
     }
 
     thetas = vector<double>(x_s[0].size()+1);
-//    thetas.push_back(164830);
-//    thetas.push_back(7946.46);
-//    thetas.push_back(5634.28);
-//    thetas.push_back(182960);
-//    thetas.push_back(-124963);
-//    thetas.push_back(-37417);
 
     steps = vector<double>(x_s[0].size()+1,baseStep);
 
     vector<vector<double>> X = x_s;
-    if(x_s[0].size() > 1){
-        X = featureScaling(x_s);
-    }
+    x_maxs.clear();
+    x_mins.clear();
+    x_avgs.clear();
 
     while(gradientDescent(X,Y));
     cout<<"over gradient descent theta";
@@ -88,38 +82,11 @@ bool LinearRegression::train(const vector<vector<double> > &x_s, const vector<do
 vector<double> LinearRegression::predict(const vector<vector<double>> &X_t)
 {
     vector<double> Y_t;
-    for(auto xs = X_t.begin();xs != X_t.end();xs++){
+    vector<vector<double>> X = X_t;
+    for(auto xs = X.begin();xs != X.end();xs++){
         Y_t.push_back(func(*xs));
     }
     return Y_t;
-}
-
-
-vector<vector<double> > LinearRegression::featureScaling(const vector<vector<double> > &x_s)
-{
-    vector<vector<double> > X;
-    for(size_t i =0;i <x_s.size();i++){
-        double x_max = x_s[i][0],x_min = x_s[i][0],x_avg = 0;
-        for(size_t j =0 ;j < x_s[i].size();j++){
-            if(x_max < x_s[i][j]) x_max = x_s[i][j];
-            if(x_min > x_s[i][j]) x_min = x_s[i][j];
-            x_avg += x_s[i][j];
-        }
-
-        x_avg = x_avg / x_s[i].size();
-
-        vector<double> xs_t;
-
-        for(size_t j =0 ;j < x_s[i].size();j++){
-            if(x_s[i][j] < -1 || x_s[i][j] > 1){
-                xs_t.push_back((x_s[i][j] - x_avg)/(x_max -x_min));
-            }else{
-                xs_t.push_back(x_s[i][j]);
-            }
-        }
-        X.push_back(xs_t);
-    }
-    return X;
 }
 
 bool LinearRegression::gradientDescent(const vector<vector<double> > &x_s,const vector<double> &Y)
@@ -188,9 +155,9 @@ bool LinearRegression::stepIsTooLarge(double a, double b)
 void LinearRegression::changeValue(double &x, bool up)
 {
     if(up){
-        x += x/200 + x*minDTheta;
+        x += x/3 + x*minDTheta;
     }else{
-        x -= x/200 + x*minDTheta;
+        x -= x/3 + x*minDTheta;
     }
 }
 
