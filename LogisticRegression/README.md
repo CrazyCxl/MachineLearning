@@ -22,15 +22,14 @@ $${\theta}^Tx=0$$
 
 ### 代价函数 (Cost Function)
 $$
-\begin{align}
-J(\theta)&=-\frac{1}{m}[\sum_{i=1}^m(y^{(i)}log\ h_\theta(x^{(i)})+(1-y^{(i)})log(1-h_\theta(x^{(i)})))]\\\\
-&= 
+J(\theta)=-\frac{1}{m}[\sum_{i=1}^m(y^{(i)}log\ h_\theta(x^{(i)})+(1-y^{(i)})log(1-h_\theta(x^{(i)})))]
+$$
+单个代价函数
 \begin{cases}
 -log(h_\theta(x)),y=1\\\\
 -log(1-h_\theta(x)),y=0
 \end{cases}
-\end{align}
-$$
+
 
 <div align=center>
 <img src="https://pic2.zhimg.com/80/v2-a609f9d5da05c8fc3d349ba606e0868d_hd.png"/>
@@ -46,6 +45,9 @@ $$
 &=\theta_j-\alpha(\frac{1}{m})\sum_{i=1}^m(h_\theta(x^{(i)})-y^{(i)})x_j^{(i)}
 \end{align}
 $$
+
+# 注意
+- x数组中可以在每一个的第一位插入1来替代常数项$\theta$
 
 # Reference
 - https://zhuanlan.zhihu.com/p/28408516

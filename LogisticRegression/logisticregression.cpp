@@ -35,6 +35,7 @@ bool LogisticRegression::train(const string &file_str)
 
             Y.push_back(*(X.end()-1));
             X.erase(X.end()-1);
+            X.insert(X.begin(),1.0);
             Xs.push_back(X);
         }
         train(Xs,Y);
@@ -54,7 +55,7 @@ bool LogisticRegression::train(const vector<vector<double> > &x_s, const vector<
         return false;
     }
 
-    thetas = vector<double>(x_s[0].size()+1,0);
+    thetas = vector<double>(x_s[0].size(),1);
 
     alpha = vector<double>(thetas.size(),baseStep);
 
@@ -73,8 +74,9 @@ vector<bool> LogisticRegression::predict(const vector<vector<double>> &X_t)
 {
     vector<bool> Y_t;
     vector<vector<double>> X = X_t;
-    for(auto xs = X.begin();xs != X.end();xs++){
-        if(decisionFunc(*xs) > 0){
+    for (size_t i =0;i<X.size();i++) {
+        X[i].insert(X[i].begin(),1);
+        if(decisionFunc(X[i]) > 0){
             Y_t.push_back(true);
         }else{
             Y_t.push_back(false);
@@ -88,11 +90,9 @@ bool LogisticRegression::gradientDescent(const vector<vector<double> > &x_s,cons
     vector<double> d_thetas_t(thetas.size(),0);
 
     for(size_t i=0;i<x_s.size();++i){
-        d_thetas_t[0] += hypothesisFunc(x_s[i]) - Y[i];
         for(size_t j=0;j<x_s[i].size();++j){
-//            d_thetas_t[j] += (decisionFunc(x_s[i]) - Y[i])*x_s[i][j];
-            double hy = (hypothesisFunc(x_s[i]) - Y[i]);
-            d_thetas_t[j+1] += hy*x_s[i][j];
+            double hy = hypothesisFunc(x_s[i]) - Y[i];
+            d_thetas_t[j] += hy*x_s[i][j];
         }
     }
 
@@ -115,6 +115,10 @@ bool LogisticRegression::gradientDescent(const vector<vector<double> > &x_s,cons
         }
     }
 
+//    if(!is_continue && cost > minData){
+//        is_continue = true;
+//    }
+
     if(is_continue){
         cout<<"continue gradient descent cost:"<<cost;
         for(size_t i = 0 ;i<thetas.size(); i++){
@@ -133,6 +137,10 @@ bool LogisticRegression::stepIsTooLarge(double a, double b)
 {
     a = fabs(a);
     b = fabs(b);
+    double diff = fabs(a-b);
+
+    if(diff > b || diff > a)
+        return true;
 
     a = getNum(a,100) +getNum(a)*10;
     b = getNum(b,100) +getNum(b)*10;
@@ -142,9 +150,9 @@ bool LogisticRegression::stepIsTooLarge(double a, double b)
 void LogisticRegression::changeValue(double &x, bool up)
 {
     if(up){
-        x += x/3 + x*minData;
+        x += x/3;
     }else{
-        x -= x/3 + x*minData;
+        x -= x/3;
     }
 }
 
@@ -196,13 +204,13 @@ double LogisticRegression::costFunc(const vector<vector<double>> &x_s, const vec
 
 double LogisticRegression::decisionFunc(const vector<double> &X)
 {
-    if(X.size()+1 != thetas.size()){
-        cout<<"LogisticRegression::decisionFunc error size!";
-        return 0;
+    if(X.size() != thetas.size()){
+        std::cout<<"decision func but size is error!"<<std::endl;
+        exit(-1);
     }
 
-    double y = thetas[0];
-    for(size_t i = 1;i<X.size();++i){
+    double y = 0;
+    for(size_t i = 0;i<X.size();++i){
         y +=  thetas[i]*X[i];
     }
 
@@ -226,7 +234,7 @@ void LogisticRegression::changeAlphaByDtheta(size_t i,const vector<double> &d_th
 {
     if(d_thetas_save.size() > 0 && fabs(d_thetas_save[i]) > minData){
         double diff = fabs(d_thetas_save[i]) - fabs(d_theta[i]);
-        if(diff < minData ){
+        if(diff < -1e-15 ){
             if(d_thetas_save[i] * d_theta[i] > 0){
                 changeValue(alpha[i],true);
             }else{
