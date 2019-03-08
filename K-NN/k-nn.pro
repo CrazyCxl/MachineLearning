@@ -12,4 +12,5 @@ SOURCES += \
     knn.cpp
 
 HEADERS += \
-    knn.h
+    knn.h \
+    kdtree.h

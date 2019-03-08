@@ -34,7 +34,6 @@ bool KNeighborsClassifier::train(const string &file_str)
 
             Y.push_back(*(X.end()-1));
             X.erase(X.end()-1);
-            X.insert(X.begin(),1.0);
             Xs.push_back(X);
         }
         train(Xs,Y);
@@ -51,7 +50,12 @@ bool KNeighborsClassifier::train(const vector<vector<double> > &x_s, const vecto
         return false;
     }
 
-    vector<vector<double>> X = x_s;
+    vector<int> Y_t;
+    for (auto y = Y.begin();y != Y.end();y++) {
+        Y_t.insert(Y_t.begin(),static_cast<int>(*y));
+    }
+
+    kdtree.feed(x_s,Y_t);
 
 //    while(gradientDescent(X,Y));
 //    cout<<"over gradient descent theta";
