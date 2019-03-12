@@ -15,9 +15,13 @@ public:
     bool train(const string &file_str);
     bool train(const vector<vector<double>> &x_s,const vector<double> &Y);
 
-    vector<bool> predict(const vector<vector<double> > &X_t);
+    vector<bool> predict(const vector<vector<double> > &X_t,size_t k = 3);
 private:
+    void featureScaling(vector<vector<double>> &x_s);
     KDTree<double> kdtree;
+
+    vector<double> xAvg;
+    vector<double> xVariance;
 };
 
 #endif // LINEARREGRESSION_H
