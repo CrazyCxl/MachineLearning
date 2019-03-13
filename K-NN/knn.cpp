@@ -57,6 +57,7 @@ bool KNeighborsClassifier::train(const vector<vector<double> > &x_s, const vecto
     }
 
     kdtree.feed(x_s,Y_t);
+    kdtree.toDot("./kdtree.dot");
 
     return true;
 }

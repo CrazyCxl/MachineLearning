@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <vector>
-
+#include <fstream>
 using namespace std;
 
 namespace KDTreeSpace {
@@ -14,6 +14,7 @@ namespace KDTreeSpace {
         Point(Point p,int n,Point *parent =NULL){
             this->X = p.X;
             this->y = p.y;
+            this->id = p.id;
             this->n=n;
             this->top = parent;
         }
@@ -30,7 +31,7 @@ namespace KDTreeSpace {
         }
         vector<T> X;
         int y = -1;
-        int n = -1;//Î¬¶È
+        int n = -1;//ç»´åº¦
 
         bool    visited = false;
         double  distance = -1;
@@ -38,6 +39,8 @@ namespace KDTreeSpace {
         Point *top   = NULL;
         Point *left  = NULL;
         Point *right = NULL;
+
+        int id = -1;
     };
 
     template <typename T>
@@ -60,6 +63,7 @@ namespace KDTreeSpace {
                 Point<T> p;
                 p.X = points_t.at(i);
                 p.y = Y.at(i);
+                p.id = i;
                 points_tmp.push_back(p);
             }
             init(points_tmp,topPoint,0);
@@ -106,7 +110,38 @@ namespace KDTreeSpace {
             topPoint = NULL;
         }
 
+        //graphvizå¯è§†åŒ–
+        void toDot(const char *file_path)
+        {
+            ofstream file(file_path);
+            if(file.is_open()){
+                file<< "digraph\n{\nnode [shape = Mrecord];\n";
+                writeDot(file,topPoint);
+                file<<"}";
+                file.close();
+            }
+        }
+
     private:
+        void writeDot(ofstream &stream,Point<T> *p)
+        {
+            if(p == NULL){
+                return;
+            }
+            stream <<"p"<< p<<" [label = \"<f0> ("<<p->id<<")"<<p->X[0];
+            for(size_t i = 1; i < p->X.size();i++)
+            {
+                stream <<"| <f"<<i<<"> "<<p->X[i];
+            }
+            stream <<"\"];\n";
+
+            if(p->top){
+                stream<<"p"<<p->top<<":f"<<p->top->n<<" -> p"<<p<<";\n";
+            }
+            writeDot(stream,p->left);
+            writeDot(stream,p->right);
+        }
+
         void clearTempData(Point<T> *p_anchor)
         {
             if(p_anchor != NULL) {
@@ -117,7 +152,7 @@ namespace KDTreeSpace {
             }
         }
         //step1
-        //¸ù¾İP µÄ×ø±êÖµºÍÃ¿¸ö½ÚµãµÄÇĞ·ÖÏòÏÂËÑË÷£¨Ò²¾ÍÊÇËµ£¬Èç¹ûPanchorÊÇ°´ÕÕ xr=a ½øĞĞÇĞ·Ö£¬²¢ÇÒ Pr<a£¬ÔòÏò×óÖ¦½øĞĞËÑË÷£¬·´Ö®Ôò×ßÓÒÖ¦£©
+        //æ ¹æ®P çš„åæ ‡å€¼å’Œæ¯ä¸ªèŠ‚ç‚¹çš„åˆ‡åˆ†å‘ä¸‹æœç´¢ï¼ˆä¹Ÿå°±æ˜¯è¯´ï¼Œå¦‚æœPanchoræ˜¯æŒ‰ç…§ xr=a è¿›è¡Œåˆ‡åˆ†ï¼Œå¹¶ä¸” Pr<aï¼Œåˆ™å‘å·¦æè¿›è¡Œæœç´¢ï¼Œåä¹‹åˆ™èµ°å³æï¼‰
         void tryfindAdjacentAnchor(vector<Point<T>> &J,size_t k,Point<T> *p_anchor,Point<T> *p_target)
         {
             while (true) {
@@ -140,7 +175,7 @@ namespace KDTreeSpace {
         }
 
         //step2
-        //µ±´ïµ½Ò»¸öµ×²¿½ÚµãÊ±£¬½«Æä±ê¼ÇÎª·ÃÎÊ¹ı¡£
+        //å½“è¾¾åˆ°ä¸€ä¸ªåº•éƒ¨èŠ‚ç‚¹æ—¶ï¼Œå°†å…¶æ ‡è®°ä¸ºè®¿é—®è¿‡ã€‚
         void whenIntoDown(vector<Point<T>> &J,size_t k,Point<T> *p_anchor,Point<T> *p_target)
         {
             p_anchor->visited = true;
@@ -148,7 +183,7 @@ namespace KDTreeSpace {
             climb(J,k,p_anchor,p_target);
         }
 
-        //»ñÈ¡×î´ó¾àÀë
+        //è·å–æœ€å¤§è·ç¦»
         double getMaxDistance(const vector<Point<T>> &J,size_t &index)
         {
             double distance = 0;
@@ -161,8 +196,8 @@ namespace KDTreeSpace {
             return distance;
         }
 
-        //Èç¹û J Àï²»×ãk ¸öµã£¬Ôò½«µ±Ç°½ÚµãµÄÌØÕ÷×ø±ê¼ÓÈëJ¡£
-        //Èç¹û J ÒÑ¾­ÓĞk¸öµã²¢ÇÒµ±Ç°½ÚµãµÄÌØÕ÷Óë P µÄ¾àÀëĞ¡ÓÚ J Àï×î³¤µÄ¾àÀë£¬ÔòÓÃµ±Ç°ÌØÕ÷Ìæ»»µô J ÖĞÀë P ×îÔ¶µÄµã¡£
+        //å¦‚æœ J é‡Œä¸è¶³k ä¸ªç‚¹ï¼Œåˆ™å°†å½“å‰èŠ‚ç‚¹çš„ç‰¹å¾åæ ‡åŠ å…¥Jã€‚
+        //å¦‚æœ J å·²ç»æœ‰kä¸ªç‚¹å¹¶ä¸”å½“å‰èŠ‚ç‚¹çš„ç‰¹å¾ä¸ P çš„è·ç¦»å°äº J é‡Œæœ€é•¿çš„è·ç¦»ï¼Œåˆ™ç”¨å½“å‰ç‰¹å¾æ›¿æ¢æ‰ J ä¸­ç¦» P æœ€è¿œçš„ç‚¹ã€‚
         void checkWhetherReplace(vector<Point<T>> &J,size_t k,Point<T> *p_anchor,Point<T> *p_target)
         {
             double distance = 0;
@@ -184,13 +219,13 @@ namespace KDTreeSpace {
         }
 
         //step3
-        //ÏòÉÏÅÀ
+        //å‘ä¸Šçˆ¬
         void climb(vector<Point<T>> &J,size_t k,Point<T> *p_anchor,Point<T> *p_target)
         {
-            if(p_anchor == topPoint){
-                return;
-            }
             while (p_anchor->visited) {
+                if(p_anchor == topPoint){
+                    return;
+                }
                 p_anchor = p_anchor->top;
             }
 
@@ -200,20 +235,20 @@ namespace KDTreeSpace {
             checkWhetherReplace(J,k,p_anchor,p_target);
 
             //(2)
-            //¼ÆËãÄ¿±êµãÓëÇĞ·ÖÏßµÄ¾àÀë
-            double l_t_ah = p_anchor->X[p_anchor->n] - p_target->X[p_anchor->n];
+            //è®¡ç®—ç›®æ ‡ç‚¹ä¸åˆ‡åˆ†çº¿çš„è·ç¦»
+            double l_t_ah = p_target->X[p_anchor->n] - p_anchor->X[p_anchor->n];
             size_t index = 0;
             double max_distance = getMaxDistance(J,index);
 
-            if(abs(l_t_ah) < max_distance || J.size() < k){
-                tryfindAdjacentAnchor(J,k,
-                                      l_t_ah > 0 ?p_anchor->right:p_anchor->left,
-                                      p_target);
-            }
-
-            if(abs(l_t_ah) >= max_distance){
+            Point<T> *child_anchor = p_anchor->left->visited?p_anchor->right:p_anchor->left;
+            if( (abs(l_t_ah) >= max_distance && J.size() >= k)||child_anchor == NULL ){
                 //keep climb
                 climb(J,k,p_anchor,p_target);
+            }else{
+                tryfindAdjacentAnchor(J,k,
+                                      child_anchor,
+                                      p_target);
+
             }
         }
 
@@ -221,21 +256,16 @@ namespace KDTreeSpace {
         {
             Point<T> *p =NULL;
 
-            //°´ÕÕNÎ¬À´ÅÅĞò
-            vector<Point<T>> points_tmp;
-            points_tmp.push_back(points_t.at(0));
+            //æŒ‰ç…§Nç»´æ¥æ’å‡åº
+            vector<Point<T>> points_tmp(points_t);
 
-            for(size_t i=1;i<points_t.size();i++){
-                bool inserted = false;
-                for(size_t j=0;j<points_tmp.size();j++){
-                    if( points_t[i].X.at(n) > points_tmp[j].X.at(n)){
-                        points_tmp.push_back(points_t[i]);
-                        inserted = true;
-                        break;
+            for(size_t i=0;i<points_tmp.size();i++){
+                for(size_t j=i;j<points_tmp.size();j++){
+                    if( points_tmp[j].X.at(n) < points_tmp[i].X.at(n)){
+                        Point<T> p_tmp = points_tmp[j];
+                        points_tmp[j] = points_tmp[i];
+                        points_tmp[i] = p_tmp;
                     }
-                }
-                if(!inserted){
-                    points_tmp.insert(points_tmp.begin(),points_t[i]);
                 }
             }
 
@@ -252,14 +282,9 @@ namespace KDTreeSpace {
                 }
             }
 
-            if(points_tmp.size() == 1){
-                return;
-            }
-
             if(anchor_index > 0){
-                anchor_index = anchor_index == 1?2:anchor_index;
                 vector<Point<T>> left;
-                copy(points_tmp.begin(),points_tmp.begin()+anchor_index-1,back_inserter(left));
+                copy(points_tmp.begin(),points_tmp.begin()+anchor_index,back_inserter(left));
                 init(left,p,(n+1)%p->X.size(),true);
             }
 
