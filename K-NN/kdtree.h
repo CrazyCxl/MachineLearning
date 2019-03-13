@@ -248,7 +248,6 @@ namespace KDTreeSpace {
                 tryfindAdjacentAnchor(J,k,
                                       child_anchor,
                                       p_target);
-
             }
         }
 
@@ -259,8 +258,8 @@ namespace KDTreeSpace {
             //按照N维来排升序
             vector<Point<T>> points_tmp(points_t);
 
-            for(size_t i=0;i<points_tmp.size();i++){
-                for(size_t j=i;j<points_tmp.size();j++){
+            for(size_t i=0;i<points_tmp.size()-1;i++){
+                for(size_t j=i+1;j<points_tmp.size();j++){
                     if( points_tmp[j].X.at(n) < points_tmp[i].X.at(n)){
                         Point<T> p_tmp = points_tmp[j];
                         points_tmp[j] = points_tmp[i];
