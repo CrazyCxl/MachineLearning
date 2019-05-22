@@ -38,6 +38,10 @@ $$
 <img src="https://pic1.zhimg.com/80/v2-b771e7ec34f3782b1ff6bd3c2a732160_hd.png"/>
 </div>
 
+等同于
+$$
+-ylog(h_\theta(x))-(1-y)log(1-h_\theta(x))
+$$
 ### 梯度下降（Gradient Descent）
 $$
 \begin{align}
